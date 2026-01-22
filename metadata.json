@@ -1,0 +1,8 @@
+{
+  "name": "MBG Systems",
+  "description": "Sistem Manajemen Bergizi Nasional - Aplikasi pemantauan distribusi gizi multi-role.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
