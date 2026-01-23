@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Save, Edit2, Camera, Shield, Lock, ShieldCheck, XCircle, RefreshCw, Smartphone, CheckCircle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, Edit2, Camera, Shield, Lock, ShieldCheck, XCircle, RefreshCw, Smartphone, CheckCircle, Database, Trash2, AlertTriangle } from 'lucide-react';
 
 const UserProfile = ({ userProfile, onUpdateProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -50,6 +51,13 @@ const UserProfile = ({ userProfile, onUpdateProfile }) => {
     }, 1000);
   };
 
+  const handleResetData = () => {
+    if (window.confirm("PERINGATAN: Tindakan ini akan menghapus semua data (Polling, Laporan, Absensi) dan mereset aplikasi ke kondisi awal. Lanjutkan?")) {
+        localStorage.clear();
+        window.location.reload();
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-slide-up relative">
       {/* Header Profile */}
@@ -98,78 +106,104 @@ const UserProfile = ({ userProfile, onUpdateProfile }) => {
 
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column: Personal Info Form */}
-            <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-lg border border-slate-100">
-               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                  <User size={20} className="text-blue-500" /> Informasi Pribadi
-               </h3>
-               
-               <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-500">Nama Lengkap</label>
-                        <input 
-                          type="text" 
-                          name="name"
-                          disabled={!isEditing}
-                          value={formData.name}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-                        />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-500">Jabatan / Role</label>
-                        <input 
-                          type="text" 
-                          disabled
-                          value={formData.role}
-                          className="w-full px-4 py-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed font-medium"
-                        />
-                     </div>
-                  </div>
+            <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100">
+                    <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <User size={20} className="text-blue-500" /> Informasi Pribadi
+                    </h3>
+                    
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-500">Nama Lengkap</label>
+                                <input 
+                                type="text" 
+                                name="name"
+                                disabled={!isEditing}
+                                value={formData.name}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-500">Jabatan / Role</label>
+                                <input 
+                                type="text" 
+                                disabled
+                                value={formData.role}
+                                className="w-full px-4 py-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed font-medium"
+                                />
+                            </div>
+                        </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-500 flex items-center gap-1">
-                           <Mail size={14} /> Email
-                        </label>
-                        <input 
-                          type="email" 
-                          name="email"
-                          disabled={!isEditing}
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70"
-                        />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-500 flex items-center gap-1">
-                           <Phone size={14} /> Telepon
-                        </label>
-                        <input 
-                          type="tel" 
-                          name="phone"
-                          disabled={!isEditing}
-                          value={formData.phone}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70"
-                        />
-                     </div>
-                  </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-500 flex items-center gap-1">
+                                <Mail size={14} /> Email
+                                </label>
+                                <input 
+                                type="email" 
+                                name="email"
+                                disabled={!isEditing}
+                                value={formData.email}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-500 flex items-center gap-1">
+                                <Phone size={14} /> Telepon
+                                </label>
+                                <input 
+                                type="tel" 
+                                name="phone"
+                                disabled={!isEditing}
+                                value={formData.phone}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70"
+                                />
+                            </div>
+                        </div>
 
-                  <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-500 flex items-center gap-1">
-                         <MapPin size={14} /> Alamat Unit Kerja
-                      </label>
-                      <textarea 
-                        name="address"
-                        disabled={!isEditing}
-                        value={formData.address}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70 resize-none"
-                      />
-                  </div>
-               </form>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-slate-500 flex items-center gap-1">
+                                <MapPin size={14} /> Alamat Unit Kerja
+                            </label>
+                            <textarea 
+                                name="address"
+                                disabled={!isEditing}
+                                value={formData.address}
+                                onChange={handleChange}
+                                rows={3}
+                                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none disabled:opacity-70 resize-none"
+                            />
+                        </div>
+                    </form>
+                </div>
+
+                {/* Database Management Section */}
+                <div className="bg-white p-6 rounded-3xl shadow-lg border border-red-100">
+                    <h3 className="text-sm font-bold text-rose-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <Database size={16} /> Zona Data
+                    </h3>
+                    <div className="flex items-center justify-between p-4 bg-rose-50 rounded-2xl border border-rose-100">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-rose-500 shadow-sm">
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-rose-800">Reset Aplikasi</p>
+                                <p className="text-xs text-rose-600">Hapus semua data lokal & logout</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handleResetData}
+                            className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 shadow-lg shadow-rose-200 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            <Trash2 size={14} /> Reset Data
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Right Column: Account Status */}

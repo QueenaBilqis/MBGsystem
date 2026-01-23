@@ -8,38 +8,67 @@ import DashboardSchool from './components/DashboardSchool';
 import DashboardStudent from './components/DashboardStudent';
 import UserProfile from './components/UserProfile';
 import { UserRole } from './types';
-import { MOCK_REPORTS_INITIAL } from './constants';
-
-const INITIAL_POLLS = [
-  { id: 1, name: 'Soto Ayam Lamongan', desc: 'Kuah kuning segar dengan koya gurih', img: 'https://images.unsplash.com/photo-1572656631137-7935297eff55?q=80&w=500&auto=format&fit=crop', votes: 120 },
-  { id: 2, name: 'Rendang Sapi', desc: 'Daging empuk bumbu meresap', img: 'https://images.unsplash.com/photo-1605333396915-47ed6b68a00e?q=80&w=500&auto=format&fit=crop', votes: 85 },
-];
-
-const SESSION_TIMEOUT = 15 * 60 * 1000;
+import { db } from './utils/db'; // Import Database Adapter
+import { RefreshCw, Database } from 'lucide-react';
 
 function App() {
+  // --- APPLICATION STATE ---
+  const [isAppLoading, setIsAppLoading] = useState(true);
+  
+  // User Session
   const [userRole, setUserRole] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+
+  // Data Bisnis
+  const [globalPolls, setGlobalPolls] = useState([]);
+  const [globalReports, setGlobalReports] = useState([]);
+  const [attendanceCount, setAttendanceCount] = useState(0);
+  const [isStudentScanned, setIsStudentScanned] = useState(false);
+
+  // UI States
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userName, setUserName] = useState('');
-  
-  const [globalPolls, setGlobalPolls] = useState(INITIAL_POLLS);
-  const [globalReports, setGlobalReports] = useState(MOCK_REPORTS_INITIAL);
-  
   const [deliveryActive, setDeliveryActive] = useState(false);
   const [deliveryProgress, setDeliveryProgress] = useState(0);
 
-  const [attendanceCount, setAttendanceCount] = useState(285);
-  const [isStudentScanned, setIsStudentScanned] = useState(false);
+  // --- INITIALIZATION (Load from DB) ---
+  useEffect(() => {
+    const initData = async () => {
+        setIsAppLoading(true);
+        
+        // 1. Load Session
+        const role = db.session.getRole();
+        const profile = db.session.getProfile();
+        
+        setUserRole(role);
+        setUserProfile(profile);
 
-  const [userProfile, setUserProfile] = useState({
-    name: 'Pengguna Baru',
-    email: 'user@mbg.gov.id',
-    phone: '08123456789',
-    role: 'User',
-    address: 'Kota Malang',
-    verified: false
-  });
+        // 2. Load Business Data (Async Simulation)
+        const [polls, reports, att] = await Promise.all([
+            db.polls.getAll(),
+            db.reports.getAll(),
+            db.attendance.getCount()
+        ]);
 
+        setGlobalPolls(polls);
+        setGlobalReports(reports);
+        setAttendanceCount(att);
+        setIsStudentScanned(db.attendance.getScanStatus());
+
+        // 3. Set Active Tab
+        if (role) {
+            if (role === UserRole.STUDENT) setActiveTab('menu');
+            else setActiveTab('dashboard');
+        }
+
+        setIsAppLoading(false);
+    };
+
+    initData();
+  }, []);
+
+  // --- BUSINESS LOGIC HANDLERS ---
+
+  // Handle Pengiriman
   useEffect(() => {
     let interval;
     if (deliveryActive) {
@@ -51,73 +80,99 @@ function App() {
             }
             return prev + 1;
         });
-      }, 1000); // Gerakan truk setiap detik
+      }, 1000); 
     }
     return () => clearInterval(interval);
   }, [deliveryActive]);
 
-  const handleUpdatePolls = (newPolls) => setGlobalPolls(newPolls);
-  const handleStudentVote = (pollId) => {
-    setGlobalPolls(prev => prev.map(p => p.id === pollId ? { ...p, votes: p.votes + 1 } : p));
+  const handleUpdatePolls = async (newPolls) => {
+      // Optimistic Update
+      setGlobalPolls(newPolls);
+      await db.polls.update(newPolls);
+  };
+  
+  const handleStudentVote = async (pollId) => {
+    const updatedPolls = await db.polls.vote(pollId);
+    setGlobalPolls(updatedPolls);
   };
 
-  const handleSendReport = (newReport) => {
+  const handleSendReport = async (newReport) => {
+    // Optimistic UI update
     setGlobalReports(prev => [newReport, ...prev]);
+    // DB Update
+    const freshReports = await db.reports.add(newReport);
+    setGlobalReports(freshReports);
   };
 
-  const handleUpdateReportStatus = (id, status) => {
-    setGlobalReports(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+  const handleUpdateReportStatus = async (id, status) => {
+    const freshReports = await db.reports.updateStatus(id, status);
+    setGlobalReports(freshReports);
   };
 
-  const handleStudentScan = () => {
+  const handleStudentScan = async () => {
     if (!isStudentScanned) {
-      setAttendanceCount(prev => prev + 1);
+      const newCount = await db.attendance.increment();
+      setAttendanceCount(newCount);
       setIsStudentScanned(true);
+      db.attendance.setScanStatus(true);
       return true;
     }
     return false;
   };
 
   const handleLogin = (role, identifier, nationalData) => {
+    const newProfile = {
+        name: nationalData ? nationalData.name : (identifier || 'Admin MBG'),
+        email: nationalData ? `${nationalData.nis}@siswa.mbg.gov.id` : `${identifier?.replace(/\s/g, '').toLowerCase() || 'admin'}@mbg.gov.id`,
+        phone: '081234567890',
+        role: role,
+        address: nationalData ? nationalData.school : 'Malang Hub',
+        verified: !!nationalData,
+        avatar: `https://ui-avatars.com/api/?name=${nationalData ? nationalData.name : (identifier || role)}&background=random&color=fff`
+    };
+
     setUserRole(role);
-    if (role === UserRole.STUDENT && nationalData) {
-        setUserName(nationalData.name);
-        setUserProfile({
-            name: nationalData.name,
-            email: `${nationalData.nis}@siswa.mbg.gov.id`,
-            phone: '0812****5678',
-            role: 'Siswa Terverifikasi',
-            address: nationalData.school,
-            verified: true
-        });
-        setActiveTab('menu');
-    } else {
-        setUserName(identifier);
-        setUserProfile({
-            name: identifier || 'Admin MBG',
-            email: `${identifier.replace(/\s/g, '').toLowerCase()}@mbg.gov.id`,
-            phone: '081234567890',
-            role: role,
-            address: 'Malang Hub',
-            verified: false
-        });
-        switch(role) {
-           case UserRole.SCHOOL: setActiveTab('dashboard'); break;
-           case UserRole.STUDENT: setActiveTab('menu'); break;
-           default: setActiveTab('dashboard');
-        }
-    }
+    setUserProfile(newProfile);
+    
+    // Save Session
+    db.session.setRole(role);
+    db.session.saveProfile(newProfile);
+
+    if (role === UserRole.STUDENT) setActiveTab('menu');
+    else setActiveTab('dashboard');
   };
 
   const handleLogout = () => {
+    db.session.logout();
     setUserRole(null);
-    setUserName('');
     setDeliveryActive(false);
     setDeliveryProgress(0);
+    setActiveTab('dashboard');
   };
 
+  const handleUpdateProfile = (updatedProfile) => {
+      setUserProfile(updatedProfile);
+      db.session.saveProfile(updatedProfile);
+  };
+
+  // --- RENDERERS ---
+
+  if (isAppLoading) {
+      return (
+          <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-4">
+              <RefreshCw className="animate-spin text-blue-500" size={48} />
+              <div className="text-center">
+                  <h2 className="text-xl font-bold font-display">Menghubungkan Database...</h2>
+                  <p className="text-slate-500 text-sm mt-2 font-mono">
+                    {db.isCloudEnabled ? 'Supabase Connection: Active' : 'Local Storage: Active'}
+                  </p>
+              </div>
+          </div>
+      );
+  }
+
   const renderDashboard = () => {
-    if (activeTab === 'profile') return <UserProfile userProfile={userProfile} onUpdateProfile={setUserProfile} />;
+    if (activeTab === 'profile') return <UserProfile userProfile={userProfile} onUpdateProfile={handleUpdateProfile} />;
     if (!userRole) return null;
 
     switch (userRole) {
