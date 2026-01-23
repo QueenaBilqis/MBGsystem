@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Save, Edit2, Camera, Shield } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, Edit2, Camera, Shield, Lock, ShieldCheck, XCircle, RefreshCw, Smartphone, CheckCircle } from 'lucide-react';
 
 const UserProfile = ({ userProfile, onUpdateProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(userProfile);
+  
+  // Security Modals State
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [is2FAActive, setIs2FAActive] = useState(true); // Default mock status
+
+  const [passwordState, setPasswordState] = useState({ old: '', new: '', confirm: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -18,8 +27,31 @@ const UserProfile = ({ userProfile, onUpdateProfile }) => {
     setIsEditing(false);
   };
 
+  const handleUpdatePassword = (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setTimeout(() => {
+        setIsSubmitting(false);
+        setSuccessMsg('Password berhasil diperbarui!');
+        setTimeout(() => {
+            setSuccessMsg('');
+            setShowPasswordModal(false);
+            setPasswordState({ old: '', new: '', confirm: '' });
+        }, 2000);
+    }, 1500);
+  };
+
+  const toggle2FA = () => {
+    setIsSubmitting(true);
+    setTimeout(() => {
+        setIsSubmitting(false);
+        setIs2FAActive(!is2FAActive);
+        setShow2FAModal(false);
+    }, 1000);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-slide-up">
+    <div className="max-w-4xl mx-auto space-y-6 animate-slide-up relative">
       {/* Header Profile */}
       <div className="relative h-48 rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-500 overflow-hidden shadow-lg">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
@@ -49,7 +81,7 @@ const UserProfile = ({ userProfile, onUpdateProfile }) => {
                  <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wider flex items-center gap-1">
                     <Shield size={12} /> {formData.role}
                  </span>
-                 <span className="text-slate-500 text-sm">Member since 2024</span>
+                 <span className="text-slate-500 text-sm">Unit: Malang City</span>
                </div>
             </div>
             <button 
@@ -156,17 +188,139 @@ const UserProfile = ({ userProfile, onUpdateProfile }) => {
                            </div>
                         </div>
                      </div>
-                     <button className="w-full py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition">
+                     
+                     <div className={`flex items-center justify-between p-3 rounded-xl border ${is2FAActive ? 'bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-200'}`}>
+                        <div className="flex items-center gap-3">
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${is2FAActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                              <Smartphone size={16} />
+                           </div>
+                           <div>
+                              <p className={`text-sm font-bold ${is2FAActive ? 'text-blue-800' : 'text-slate-600'}`}>SMS 2FA</p>
+                              <p className={`text-xs ${is2FAActive ? 'text-blue-600' : 'text-slate-400'}`}>{is2FAActive ? 'Aktif' : 'Nonaktif'}</p>
+                           </div>
+                        </div>
+                     </div>
+
+                     <button 
+                        onClick={() => setShowPasswordModal(true)}
+                        className="w-full py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition active:scale-[0.98]"
+                     >
                         Ubah Password
                      </button>
-                     <button className="w-full py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition">
-                        Aktifkan 2FA
+                     <button 
+                        onClick={() => setShow2FAModal(true)}
+                        className={`w-full py-3 rounded-xl text-sm font-bold transition active:scale-[0.98] ${
+                          is2FAActive ? 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+                        }`}
+                     >
+                        {is2FAActive ? 'Nonaktifkan 2FA' : 'Aktifkan 2FA'}
                      </button>
                   </div>
                </div>
             </div>
          </div>
       </div>
+
+      {/* MODAL: UBAH PASSWORD */}
+      {showPasswordModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-pop">
+                  <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                      <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
+                          <Lock size={20} className="text-blue-600" /> Ubah Password
+                      </h3>
+                      <button onClick={() => setShowPasswordModal(false)} className="text-slate-400 hover:text-slate-600">
+                          <XCircle size={24} />
+                      </button>
+                  </div>
+                  <form onSubmit={handleUpdatePassword} className="p-8 space-y-6">
+                      {successMsg && (
+                          <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-100 flex items-center gap-2 font-bold animate-pop">
+                              <CheckCircle size={18} /> {successMsg}
+                          </div>
+                      )}
+                      <div className="space-y-4">
+                          <div>
+                              <label className="text-xs font-bold text-slate-400 uppercase">Password Lama</label>
+                              <input 
+                                type="password" 
+                                required
+                                value={passwordState.old}
+                                onChange={(e) => setPasswordState({...passwordState, old: e.target.value})}
+                                className="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" 
+                              />
+                          </div>
+                          <div>
+                              <label className="text-xs font-bold text-slate-400 uppercase">Password Baru</label>
+                              <input 
+                                type="password" 
+                                required
+                                value={passwordState.new}
+                                onChange={(e) => setPasswordState({...passwordState, new: e.target.value})}
+                                className="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" 
+                              />
+                          </div>
+                          <div>
+                              <label className="text-xs font-bold text-slate-400 uppercase">Konfirmasi Password Baru</label>
+                              <input 
+                                type="password" 
+                                required
+                                value={passwordState.confirm}
+                                onChange={(e) => setPasswordState({...passwordState, confirm: e.target.value})}
+                                className="w-full mt-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" 
+                              />
+                          </div>
+                      </div>
+                      <button 
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                      >
+                          {isSubmitting ? <RefreshCw className="animate-spin" size={20} /> : 'Simpan Password Baru'}
+                      </button>
+                  </form>
+              </div>
+          </div>
+      )}
+
+      {/* MODAL: VERIFIKASI 2FA */}
+      {show2FAModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-pop">
+                  <div className="p-8 text-center">
+                      <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${is2FAActive ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
+                          {is2FAActive ? <Shield size={40} /> : <ShieldCheck size={40} />}
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                          {is2FAActive ? 'Nonaktifkan 2FA?' : 'Aktifkan 2FA?'}
+                      </h3>
+                      <p className="text-slate-500 mb-8 leading-relaxed">
+                          {is2FAActive 
+                            ? 'Setelah dinonaktifkan, akun Anda hanya akan dilindungi oleh password saja. Keamanan akan berkurang.' 
+                            : 'Setiap kali Anda login, sistem akan mengirimkan kode verifikasi 6-digit ke nomor SMS terdaftar Anda.'}
+                      </p>
+                      <div className="space-y-3">
+                          <button 
+                            onClick={toggle2FA}
+                            disabled={isSubmitting}
+                            className={`w-full py-4 rounded-xl font-bold transition flex items-center justify-center gap-2 ${
+                                is2FAActive ? 'bg-rose-600 text-white hover:bg-rose-700 shadow-rose-200 shadow-lg' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200 shadow-lg'
+                            }`}
+                          >
+                             {isSubmitting ? <RefreshCw className="animate-spin" /> : (is2FAActive ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan Sekarang')}
+                          </button>
+                          <button 
+                            onClick={() => setShow2FAModal(false)}
+                            className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition"
+                          >
+                              Batalkan
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
     </div>
   );
 };
