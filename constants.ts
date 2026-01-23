@@ -10,6 +10,12 @@ export const MOCK_STATS = {
   complianceRate: 96.2,
 };
 
+export const MOCK_HOSPITALS = [
+  { id: 'h1', name: 'RSUD Dr. Saiful Anwar', address: 'Jl. Jaksa Agung Suprapto No.2', phone: '(0341) 362101', distance: '1.2 km' },
+  { id: 'h2', name: 'RS Hermina Tangkubanprahu', address: 'Jl. Tangkubanprahu No.31', phone: '(0341) 325082', distance: '2.5 km' },
+  { id: 'h3', name: 'RS Lavalette', address: 'Jl. G.A. Kartini No.13', phone: '(0341) 364456', distance: '3.1 km' },
+];
+
 export const MOCK_NATIONAL_STUDENTS = [
   { 
     nis: '241507864', 
